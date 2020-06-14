@@ -4,6 +4,16 @@ from decimal import Decimal
 log = logging.getLogger(__name__)
 
 
+def read_file_content(recv_data, request):
+    '''
+        - read file content from received file
+        - read test file if triggered from test runner
+    '''
+    if getattr(request, "test_runner", False):
+        return open(recv_data["graphie"], 'rb').read()
+    return recv_data["graphie"].read()
+
+
 def is_none_value(value):
     ''' parse falsify values '''
     if value in [None, False]:

@@ -101,7 +101,8 @@ class FileManager(models.Model):
             # if file does not exist, store the metadata and queue for downscaling
             filetype = data["file_type"]
             extension = data["file_extension"]
-            filename = data["graphie"].name.replace(data["graphie"].name.split('.')[-1], extension)
+            filename = data["graphie"].name.replace(data["graphie"].name.split('.')[-1], \
+                extension) if not graphie.test_runner else data["graphie"]
 
             file_path = f"{TEMP_IMAGE_PATH}/{graphie.uu}.{extension}" if filetype == "1" \
                 else f"{TEMP_VIDEO_PATH}/{graphie.uu}.{extension}"
@@ -118,7 +119,9 @@ class FileManager(models.Model):
             graphie.illustration = filemanager
             graphie.save()
 
-            file_optimizer.delay(filemanager.uu)
+            if not graphie.test_runner: file_optimizer.delay(filemanager.uu)
+            else: file_optimizer(filemanager.uu)
+
             return True
 
         except Exception as e:

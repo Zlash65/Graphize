@@ -13,6 +13,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from apps.grapher.models import Grapher, Graphie, FileManager
+from apps.grapher.helpers import read_file_content
 from apps.grapher.helpers import validate_information
 from apps.grapher.helpers import validate_location_info
 
@@ -35,9 +36,9 @@ def create_graphie(request):
             fail_message.update({"message": message})
             return JsonResponse(fail_message, status=400)
 
-        file_content = recv_data["graphie"].read()
+        file_content = read_file_content(recv_data, request=request)
         mimetype_info = filetype.guess(file_content)
-        if "image" not in mimetype_info.mime and "video" not in mimetype_info.mime:
+        if not mimetype_info or ("image" not in mimetype_info.mime and "video" not in mimetype_info.mime):
             fail_message.update({"message": "Uploaded file is not an image / video"})
             return JsonResponse(fail_message, status=400)
         else:
@@ -50,6 +51,7 @@ def create_graphie(request):
             return JsonResponse(fail_message, status=400)
 
         # store file in temporary location for further processing
+        graphie.test_runner = getattr(request, "test_runner", False)
         status = FileManager.add_file(recv_data, graphie=graphie, file_content=file_content)
         if not status:
             Graphie.objects.filter(uu=graphie.uu).delete()

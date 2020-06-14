@@ -29,3 +29,18 @@ def read_data_from_request(request):
     except Exception as e:
         tracelog("Error reading data from request", repr(e))
         return dict()
+
+
+def get_json_response_of_api_call(response):
+    try:
+        try:
+            resp_json = response.json()
+        except Exception as e:
+            resp_json = json.loads(response.text)
+    except Exception as e:
+        try:
+            resp_json = json.loads(response.content)
+        except Exception as e:
+            resp_json = dict()
+
+    return resp_json
