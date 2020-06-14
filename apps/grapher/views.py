@@ -1,15 +1,21 @@
 import logging
+from decimal import Decimal
 
+from django.db.models import F, Q
 from django.http import JsonResponse
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import Distance
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from apps.grapher.models import Grapher, Graphie
 from apps.grapher.helpers import validate_information
+from apps.grapher.helpers import validate_location_info
 
 from common.logger import tracelog
 from common.utils import read_data_from_request
+from common.file_handler import get_content_hash
 
 log = logging.getLogger(__name__)
 
@@ -37,3 +43,56 @@ def create_graphie(request):
         tracelog("CREATE STORY ERROR", repr(e))
         return JsonResponse({"status": False, "message": "Encountered an error \
             while saving your Story. Please try again."}, status=400)
+
+
+@api_view(['POST'])
+def get_graphie_list(request):
+    '''
+        - get list of all stories from latest to oldest
+        - condition
+            - pass name of Grapher to fetch only their entries
+            - pass Latitude and Longitude and the radius to fetch
+                all stories in that radius from the location.
+            - default radius will be 5000 meters
+        - parameter types
+            - grapher_name     -> string
+            - latitude         -> decimal
+            - longitude        -> decimal
+            - radius           -> integer (value considered in meters)
+    '''
+
+    try:
+        condition = dict()
+        recv_data = read_data_from_request(request)
+
+        # Formulate condition based on grapher name if provided
+        if recv_data.get("grapher_name", ""):
+            condition["grapher__name"] = recv_data["grapher_name"]
+        if recv_data.get("username", ""):
+            username = recv_data["username"]
+            condition["grapher__username"] = username
+
+        # Formulate condition based on latitude, longitude if provided
+        status, message = validate_location_info(recv_data, exists=True)
+        if status :
+            radius = int(recv_data.get("radius", 5000))
+            latitude = Decimal(recv_data["latitude"])
+            longitude = Decimal(recv_data["longitude"])
+            condition["location__distance_lt"] = (
+                Point([latitude, longitude]),
+                Distance(m=radius)
+            )
+
+        graphies = list(Graphie.objects.filter(**condition)\
+            .annotate(grapher_name=F("grapher__name"))
+            .annotate(uuid=F("uu"))
+            .order_by("-created_at")
+            .values_list("grapher_name", "subject", "description", "uuid")
+        )
+
+        return JsonResponse({"status": True, "graphies": graphies}, status=200)
+
+    except Exception as e:
+        tracelog("GET GRAPHIE LIST ERROR", repr(e))
+        return JsonResponse({"status": False, "message": "Error fetching stories. \
+            Please try again in some time."}, status=400)

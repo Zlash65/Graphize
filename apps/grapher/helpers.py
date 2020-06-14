@@ -11,6 +11,37 @@ def is_none_value(value):
     else: return True
 
 
+def validate_location_info(recv_data, exists=False):
+    '''
+        - check if latitude and longitude data is correct
+        - return status and message accordingly
+    '''
+    status, message = True, ""
+    recv_data_keys = recv_data.keys()
+
+
+    if "latitude" in recv_data_keys and not "longitude" in recv_data_keys:
+        status, message = False, "Please provide a valid longitude for the given latitude."
+    elif "longitude" in recv_data_keys and not "latitude" in recv_data_keys:
+        status, message = False, "Please provide a valid latitude for the given longitude."
+    elif "latitude" in recv_data_keys and "longitude" in recv_data_keys:
+        try:
+            Decimal(recv_data["latitude"])
+        except Exception as e:
+            status, message = False, "Invalid value for Latitude."
+
+        try:
+            if status:
+                Decimal(recv_data["longitude"])
+            else: pass
+        except Exception as e:
+            status, message = False, "Invalid value for Longitude."
+    else:
+        if exists: status, message = False, "No location info provided"
+
+    return status, message
+
+
 def validate_information(recv_data):
     '''
         - check if all the required data has been posted
@@ -30,22 +61,6 @@ def validate_information(recv_data):
         status, message = False, "Please add a description for your story."
 
     if status:
-        recv_data_keys = recv_data.keys()
-        if "latitude" in recv_data_keys and not "longitude" in recv_data_keys:
-            status, message = False, "Please provide a valid longitude for the given latitude."
-        elif "longitude" in recv_data_keys and not "latitude" in recv_data_keys:
-            status, message = False, "Please provide a valid latitude for the given longitude."
-        elif "latitude" in recv_data_keys and "longitude" in recv_data_keys:
-            try:
-                Decimal(recv_data["latitude"])
-            except Exception as e:
-                status, message = False, "Invalid value for Latitude."
-
-            try:
-                if status:
-                    Decimal(recv_data["longitude"])
-                else: pass
-            except Exception as e:
-                status, message = False, "Invalid value for Longitude."
+        status, message = validate_location_info(recv_data)
 
     return status, message
