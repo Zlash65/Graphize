@@ -7,7 +7,6 @@ from django.test import TestCase
 from rest_framework.test import APIRequestFactory
 
 from apps.grapher import views
-
 from common.utils import get_json_response_of_api_call
 
 from Graphize.settings import BASE_DIR
@@ -16,9 +15,6 @@ from Graphize.settings import TEMP_IMAGE_PATH
 from Graphize.settings import TEMP_VIDEO_PATH
 
 class Graphize(TestCase):
-
-    headers = {'Content-type': 'application/json'}
-    create_graphie_api = "http://app.kredily.xyz/grapher/create-graphie/"
 
     def setUp(self):
         copy_test_low_resolution_image()

@@ -12,7 +12,8 @@ from django.contrib.gis.measure import Distance
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from apps.grapher.models import Grapher, Graphie, FileManager
+from apps.grapher.models import FileManager
+from apps.grapher.models import Grapher, Graphie
 from apps.grapher.helpers import read_file_content
 from apps.grapher.helpers import validate_information
 from apps.grapher.helpers import validate_location_info
@@ -26,6 +27,12 @@ log = logging.getLogger(__name__)
 
 @api_view(['POST'])
 def create_graphie(request):
+    '''
+        - validate all forms of validation on incoming parameters
+        - store the data in appropriate models
+        - queue the job to optimize the uploaded files
+    '''
+
     fail_message = {"status": False, "message": ""}
     success_message = {"status": True, "message": "Graphie saved!"}
     try:
@@ -92,6 +99,9 @@ def get_graphie_list(request):
         if recv_data.get("username", ""):
             username = recv_data["username"]
             condition["grapher__username"] = username
+        if recv_data.get("unprocessed", ""):
+            condition["status"] = "1"
+        else: condition["status"] = "2"
 
         # Formulate condition based on latitude, longitude if provided
         status, message = validate_location_info(recv_data, exists=True)
@@ -124,6 +134,7 @@ def get_graphie_illustration(request):
     '''
         - pass the uuid of the graphie to fetch its image or video
     '''
+
     try:
         recv_data = read_data_from_request(request)
         if not recv_data.get("uuid", None):
