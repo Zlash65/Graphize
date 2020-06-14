@@ -1,3 +1,5 @@
+import os
+import magic
 import logging
 from decimal import Decimal
 
@@ -9,7 +11,7 @@ from django.contrib.gis.measure import Distance
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from apps.grapher.models import Grapher, Graphie
+from apps.grapher.models import Grapher, Graphie, FileManager
 from apps.grapher.helpers import validate_information
 from apps.grapher.helpers import validate_location_info
 
@@ -32,9 +34,22 @@ def create_graphie(request):
             fail_message.update({"message": message})
             return JsonResponse(fail_message, status=400)
 
+        file_content = recv_data["graphie"].read()
+        mimetype_info = magic.from_buffer(file_content)
+        if "image" not in mimetype_info and "video" not in mimetype_info:
+            fail_message.update({"message": "Uploaded file is not an image / video"})
+            return JsonResponse(fail_message, status=400)
+
         status, graphie = Graphie.add_graphie(recv_data)
         if not status:
             fail_message.update({"message": "Encountered an error while saving your Story."})
+            return JsonResponse(fail_message, status=400)
+
+        # store file in temporary location for further processing
+        status = FileManager.add_file(recv_data, graphie=graphie, file_content=file_content)
+        if not status:
+            Graphie.objects.filter(uu=graphie.uu).delete()
+            fail_message.update({"message": "Please check the uploaded file."})
             return JsonResponse(fail_message, status=400)
 
         return JsonResponse(success_message, status=200)
@@ -87,7 +102,7 @@ def get_graphie_list(request):
             .annotate(grapher_name=F("grapher__name"))
             .annotate(uuid=F("uu"))
             .order_by("-created_at")
-            .values_list("grapher_name", "subject", "description", "uuid")
+            .values("grapher_name", "subject", "description", "uuid")
         )
 
         return JsonResponse({"status": True, "graphies": graphies}, status=200)

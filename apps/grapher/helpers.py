@@ -60,6 +60,9 @@ def validate_information(recv_data):
     elif not recv_data.get("description", None):
         status, message = False, "Please add a description for your story."
 
+    elif not recv_data.get("graphie", None):
+        status, message = False, "Please upload the appropriate file your story."
+
     if status:
         status, message = validate_location_info(recv_data)
 

@@ -1,3 +1,4 @@
+import magic
 import uuid as uuid
 from decimal import Decimal
 
@@ -7,8 +8,14 @@ from django.contrib.postgres.fields import JSONField
 
 from common.logger import tracelog
 
+from Graphize.settings import TEMP_IMAGE_PATH
+from Graphize.settings import TEMP_VIDEO_PATH
+
 TYPE = (('1', 'Image'),
         ('2', 'Video'),)
+
+PROCESSING  = (('1', 'Processing'),
+                ('2', 'Completed'),)
 
 
 class Grapher(models.Model):
@@ -53,12 +60,12 @@ class FileManager(models.Model):
 
     uu = models.UUIDField(default=uuid.uuid4, unique=True)
 
-    file_size = models.BigIntegerField(default=0)
+    filesize = models.BigIntegerField(default=0)
     extension = models.CharField(max_length=20)  # eg. excel, pdf, img
     filename = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=500, null=True, blank=True)
     content_hash = models.CharField(max_length=100, null=True, blank=True)
-    type = models.CharField(max_length=2, choices=TYPE, null=True, blank=True)
+    filetype = models.CharField(max_length=2, choices=TYPE, null=True, blank=True)
 
     data = JSONField(default=dict, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add =True)
@@ -66,6 +73,56 @@ class FileManager(models.Model):
 
     def __str__(self):
         return str(self.filename)
+
+    @staticmethod
+    def add_file(data, graphie=None, file_content=None):
+        '''
+            - store the uploaded file at a temporary location
+            - enqueue a task for downscaling
+            - store other meta data and return status
+        '''
+        from apps.grapher.tasks import file_optimizer
+        from common.file_handler import get_content_hash
+        from common.file_handler import get_size_of_file
+
+        try:
+            # read file if file_content not given
+            if not file_content:
+                file_content = data["graphie"].read()
+
+            # if same file has been uploaded already, bypass processing
+            content_hash = get_content_hash(file_content)
+            exists = FileManager.objects.filter(content_hash=content_hash).last()
+            if exists:
+                graphie.illustration = exists
+                graphie.save()
+                return True
+
+            # if file does not exist, store the metadata and queue for downscaling
+            filename = data["graphie"].name
+            mimetype_info = magic.from_buffer(file_content)
+            filetype = "1" if "image" in mimetype_info else "2"
+            extension = str(filename).split('.')[-1]
+            file_path = f"{TEMP_IMAGE_PATH}/{graphie.uu}.{extension}" if filetype == "1" \
+                else f"{TEMP_VIDEO_PATH}/{graphie.uu}.{extension}"
+
+            with open(file_path, 'wb') as file_writer:
+                file_writer.write(file_content)
+            filesize = get_size_of_file(file_path)
+
+            filemanager = FileManager.objects.create(filename=filename, filesize=filesize, \
+                filetype=filetype, extension=extension,  content_hash=content_hash, \
+                data={"temp_path": file_path})
+
+            graphie.illustration = exists
+            graphie.save()
+
+            file_optimizer.delay(filemanager.uu)
+            return True
+
+        except Exception as e:
+            tracelog("FILE SAVING ERROR", repr(e))
+            return False
 
 
 class Graphie(models.Model):
@@ -83,6 +140,7 @@ class Graphie(models.Model):
     location = models.PointField(geography=True, default=Point(0.0, 0.0))
     illustration = models.ForeignKey(FileManager, related_name="illustration", \
         null=True, blank=True, on_delete=models.CASCADE)
+    status = models.CharField(max_length=2, choices=PROCESSING, default='1')
 
     data = JSONField(default=dict, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add =True)
