@@ -6,6 +6,10 @@ from common.logger import tracelog
 
 
 def read_data_from_request(request):
+    '''
+        - iterate through all variants of fetching data from request object
+    '''
+
     try:
         if hasattr(request, 'data') and request.data:
             if isinstance(request.data, QueryDict):
@@ -32,6 +36,10 @@ def read_data_from_request(request):
 
 
 def get_json_response_of_api_call(response):
+    '''
+        - read data from response object
+    '''
+
     try:
         try:
             resp_json = response.json()

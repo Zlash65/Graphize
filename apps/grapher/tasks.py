@@ -23,6 +23,7 @@ def file_optimizer(uuid, **kwargs):
         - downscale video to 480p
         - leave lower resolution as it is
     '''
+
     from apps.grapher.models import Graphie
     from apps.grapher.models import FileManager
     from common.file_handler import delete_file_from_disk
