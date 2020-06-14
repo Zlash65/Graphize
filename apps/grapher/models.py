@@ -2,6 +2,7 @@ import uuid as uuid
 
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
+from django.contrib.postgres.fields import JSONField
 
 from common.logger import tracelog
 
@@ -16,7 +17,7 @@ class Grapher(models.Model):
     uu = models.UUIDField(default=uuid.uuid4, unique=True)
 
     name = models.CharField(max_length=100)
-    username = models.CharField(max_length=100)
+    username = models.CharField(max_length=100, unique=True)
 
     created_at = models.DateTimeField(auto_now_add =True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -40,6 +41,7 @@ class FileManager(models.Model):
     content_hash = models.CharField(max_length=100, null=True, blank=True)
     type = models.CharField(max_length=2, choices=TYPE, null=True, blank=True)
 
+    data = JSONField(default=dict, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add =True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -62,6 +64,7 @@ class Graphie(models.Model):
     location = models.PointField(geography=True, default=Point(0.0, 0.0))
     illustration = models.OneToOneField(FileManager, related_name="illustration", on_delete=models.CASCADE)
 
+    data = JSONField(default=dict, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add =True)
     updated_at = models.DateTimeField(auto_now=True)
 
