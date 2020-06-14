@@ -145,3 +145,7 @@ STATIC_ROOT = os.path.join(BASE_DIR + '/static/')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+TEMP_ROOT_PATH = os.path.join(BASE_DIR + '/temp/')
+TEMP_IMAGE_PATH = os.path.join(BASE_DIR + '/temp/images/')
+TEMP_VIDEO_PATH = os.path.join(BASE_DIR + '/temp/videos/')
