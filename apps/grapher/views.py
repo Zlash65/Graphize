@@ -115,3 +115,32 @@ def get_graphie_list(request):
         tracelog("GET GRAPHIE LIST ERROR", repr(e))
         return JsonResponse({"status": False, "message": "Error fetching stories. " \
             "Please try again in some time."}, status=400)
+
+
+@api_view(['POST'])
+def get_graphie_illustration(request):
+    '''
+        - pass the uuid of the graphie to fetch its image or video
+    '''
+    try:
+        recv_data = read_data_from_request(request)
+        if not recv_data.get("uuid", None):
+            return JsonResponse({"status": False, "message": "Please provide a " \
+                "valid uuid to fetch the iilustration file."}, status=400)
+
+        # check if the uuid is valid or not
+        graphie = Graphie.objects.filter(uu=recv_data["uuid"]).last()
+        if not graphie:
+            return JsonResponse({"status": False, "message": "Invalid uuid"}, status=400)
+
+        # check if file optimization is completed
+        if graphie.status == '1':
+            return JsonResponse({"status": False, "message": "Illustration is being " \
+                "processed at the moment. Please try again in some time."}, status=400)
+
+        return JsonResponse({"status": True, "filepath": graphie.illustration.filepath})
+
+    except Exception as e:
+        tracelog("GET GRAPHIE ILLUSTRATION ERROR", repr(e))
+        return JsonResponse({"status": False, "message": "Encountered an error " \
+            "while fetching illustration file."}, status=400)
