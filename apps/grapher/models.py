@@ -1,4 +1,5 @@
 import uuid as uuid
+from decimal import Decimal
 
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
@@ -101,11 +102,12 @@ class Graphie(models.Model):
             subject = data["subject"]
             description = data["description"]
 
-            latitude, longitude = data.get("latitide", 0), data.get("longitude", 0)
-            extra_data = {"latitude": latitude, "longitude": longitude}
+            latitude = Decimal(data.get("latitude", 0))
+            longitude = Decimal(data.get("longitude", 0))
+            extra_data = {"latitude": str(latitude), "longitude": str(longitude)}
 
             graphie = Graphie.objects.create(grapher=grapher, subject=subject, data=extra_data, \
-                description=description, location=Point(latitude, longitude))
+                description=description, location=Point([latitude, longitude]))
 
             return True, graphie
 

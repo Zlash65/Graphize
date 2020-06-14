@@ -33,7 +33,7 @@ def validate_information(recv_data):
         recv_data_keys = recv_data.keys()
         if "latitude" in recv_data_keys and not "longitude" in recv_data_keys:
             status, message = False, "Please provide a valid longitude for the given latitude."
-        elif "logitude" in recv_data_keys and not "latitude" in recv_data_keys:
+        elif "longitude" in recv_data_keys and not "latitude" in recv_data_keys:
             status, message = False, "Please provide a valid latitude for the given longitude."
         elif "latitude" in recv_data_keys and "longitude" in recv_data_keys:
             try:
@@ -43,9 +43,9 @@ def validate_information(recv_data):
 
             try:
                 if status:
-                    Decimal(recv_data["latitude"])
+                    Decimal(recv_data["longitude"])
                 else: pass
             except Exception as e:
-                status, message = False, "Invalid value for Latitude."
+                status, message = False, "Invalid value for Longitude."
 
     return status, message
