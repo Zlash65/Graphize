@@ -6,7 +6,7 @@ import os
 from celery import Celery
 from django.conf import settings
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Graphize.settings-local')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Graphize.settings-prod')
 
 app = Celery('Graphize')
 
