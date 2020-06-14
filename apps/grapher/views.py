@@ -151,7 +151,8 @@ def get_graphie_illustration(request):
             return JsonResponse({"status": False, "message": "Illustration is being " \
                 "processed at the moment. Please try again in some time."}, status=400)
 
-        return JsonResponse({"status": True, "filepath": graphie.illustration.filepath})
+        filepath = f"https://{request.get_host()}{graphie.illustration.filepath}"
+        return JsonResponse({"status": True, "filepath": filepath})
 
     except Exception as e:
         tracelog("GET GRAPHIE ILLUSTRATION ERROR", repr(e))
