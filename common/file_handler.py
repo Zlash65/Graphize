@@ -43,7 +43,7 @@ def process_image_file(current_path, final_path):
     if height > 1200:
         height = 1200
 
-    resize_to = (height, width)
+    resize_to = (width, height)
     resized_image = im.resize(resize_to, Image.ANTIALIAS)
     resized_image.save(f"{final_path}", quality=95)
 
