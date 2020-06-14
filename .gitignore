@@ -135,3 +135,9 @@ dmypy.json
 */**/migrations/0*.pyc
 */**/migrations/__init__.py
 */**/migrations/__init__.pyc
+
+*.log
+*.pid
+
+media
+
