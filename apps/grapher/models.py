@@ -1,4 +1,3 @@
-import magic
 import uuid as uuid
 from decimal import Decimal
 
@@ -66,6 +65,7 @@ class FileManager(models.Model):
     description = models.CharField(max_length=500, null=True, blank=True)
     content_hash = models.CharField(max_length=100, null=True, blank=True)
     filetype = models.CharField(max_length=2, choices=TYPE, null=True, blank=True)
+    filepath = models.CharField(max_length=200, null=True, blank=True)
 
     data = JSONField(default=dict, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add =True)
@@ -90,19 +90,19 @@ class FileManager(models.Model):
             if not file_content:
                 file_content = data["graphie"].read()
 
-            # if same file has been uploaded already, bypass processing
+            # # if same file has been uploaded already, bypass processing
             content_hash = get_content_hash(file_content)
-            exists = FileManager.objects.filter(content_hash=content_hash).last()
-            if exists:
-                graphie.illustration = exists
-                graphie.save()
-                return True
+            # exists = FileManager.objects.filter(content_hash=content_hash).last()
+            # if exists:
+            #     graphie.illustration = exists
+            #     graphie.save()
+            #     return True
 
             # if file does not exist, store the metadata and queue for downscaling
-            filename = data["graphie"].name
-            mimetype_info = magic.from_buffer(file_content)
-            filetype = "1" if "image" in mimetype_info else "2"
-            extension = str(filename).split('.')[-1]
+            filetype = data["file_type"]
+            extension = data["file_extension"]
+            filename = data["graphie"].name.replace(data["graphie"].name.split('.')[-1], extension)
+
             file_path = f"{TEMP_IMAGE_PATH}/{graphie.uu}.{extension}" if filetype == "1" \
                 else f"{TEMP_VIDEO_PATH}/{graphie.uu}.{extension}"
 
@@ -110,11 +110,12 @@ class FileManager(models.Model):
                 file_writer.write(file_content)
             filesize = get_size_of_file(file_path)
 
+            data = {"filename": f"{graphie.uu}.{extension}"}
+            data.update({"temp_path": file_path})
             filemanager = FileManager.objects.create(filename=filename, filesize=filesize, \
-                filetype=filetype, extension=extension,  content_hash=content_hash, \
-                data={"temp_path": file_path})
+                filetype=filetype, extension=extension,  content_hash=content_hash, data=data)
 
-            graphie.illustration = exists
+            graphie.illustration = filemanager
             graphie.save()
 
             file_optimizer.delay(filemanager.uu)

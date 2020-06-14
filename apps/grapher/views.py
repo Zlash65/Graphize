@@ -1,6 +1,7 @@
 import os
 import magic
 import logging
+import filetype
 from decimal import Decimal
 
 from django.db.models import F, Q
@@ -35,10 +36,13 @@ def create_graphie(request):
             return JsonResponse(fail_message, status=400)
 
         file_content = recv_data["graphie"].read()
-        mimetype_info = magic.from_buffer(file_content)
-        if "image" not in mimetype_info and "video" not in mimetype_info:
+        mimetype_info = filetype.guess(file_content)
+        if "image" not in mimetype_info.mime and "video" not in mimetype_info.mime:
             fail_message.update({"message": "Uploaded file is not an image / video"})
             return JsonResponse(fail_message, status=400)
+        else:
+            recv_data["file_extension"] = mimetype_info.extension
+            recv_data["file_type"] = "1" if "image" in mimetype_info.mime else "2"
 
         status, graphie = Graphie.add_graphie(recv_data)
         if not status:
@@ -56,8 +60,8 @@ def create_graphie(request):
 
     except Exception as e:
         tracelog("CREATE STORY ERROR", repr(e))
-        return JsonResponse({"status": False, "message": "Encountered an error \
-            while saving your Story. Please try again."}, status=400)
+        return JsonResponse({"status": False, "message": "Encountered an error " \
+            "while saving your Story. Please try again."}, status=400)
 
 
 @api_view(['POST'])
@@ -109,5 +113,5 @@ def get_graphie_list(request):
 
     except Exception as e:
         tracelog("GET GRAPHIE LIST ERROR", repr(e))
-        return JsonResponse({"status": False, "message": "Error fetching stories. \
-            Please try again in some time."}, status=400)
+        return JsonResponse({"status": False, "message": "Error fetching stories. " \
+            "Please try again in some time."}, status=400)
