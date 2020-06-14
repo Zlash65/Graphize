@@ -3,3 +3,5 @@ djangorestframework==3.9.1
 python-memcached==1.59
 kombu==4.6.5
 psycopg2==2.7.7
+ipython==7.15.0
+ipython-genutils==0.2.0
