@@ -12,3 +12,5 @@ celery==4.3.0
 celery-haystack==0.10
 moviepy==1.0.3
 filetype==1.0.7
+supervisor==4.0.4
+gunicorn==19.3.0

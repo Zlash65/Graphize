@@ -2,9 +2,11 @@ from kombu import Queue, Exchange
 
 from Graphize.settings import *
 
-ALLOWED_HOSTS = ['*.localhost', 'localhost', '*']
+DEBUG = False
 
-SERVER_HOST = 'app.localhost'
+ALLOWED_HOSTS = ['*']
+
+SERVER_HOST = 'zlash.xyz'
 
 # session storage
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
@@ -47,8 +49,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'graphize',
-        'USER': 'postgres',
-        'PASSWORD': 'root',
+        'USER': 'grapher',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5432',
     }
